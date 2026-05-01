@@ -17,5 +17,8 @@ sleep 8
 echo "Configuring iptables NAT rule..."
 iptables -t nat -A POSTROUTING -o CloudflareWARP -j MASQUERADE
 
+echo "Starting gost..."
+gost -L "http://:1080?udp=true" -L "socks5://:1081?udp=true" &
+
 # Keep the container running
 wait -n

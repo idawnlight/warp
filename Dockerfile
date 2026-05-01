@@ -17,6 +17,13 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Install gost
+ARG GOST_VERSION=3.2.6
+RUN ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL "https://github.com/go-gost/gost/releases/download/v${GOST_VERSION}/gost_${GOST_VERSION}_linux_${ARCH}.tar.gz" \
+       | tar -xz -C /usr/local/bin gost \
+    && chmod +x /usr/local/bin/gost
+
 # Copy our startup script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
