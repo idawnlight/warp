@@ -34,12 +34,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get WARP version
+        id: warp-version
+        run: |
+          VERSION=$(curl -s https://pkg.cloudflareclient.com/dists/noble/main/binary-amd64/Packages \
+            | awk '/^Package: cloudflare-warp$/{found=1} found && /^Version:/{print $2; exit}')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ steps.warp-version.outputs.version }}
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
