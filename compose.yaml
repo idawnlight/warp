@@ -1,7 +1,7 @@
 services:
   warp-router:
     container_name: warp-router
-    image: ghcr.io/idawnlight/warp:master
+    image: ghcr.io/idawnlight/warp:latest
     pull_policy: always
     restart: unless-stopped
     cap_add:
@@ -14,7 +14,6 @@ services:
     volumes:
       - warp-data:/var/lib/cloudflare-warp
       - ./mdm.xml:/var/lib/cloudflare-warp/mdm.xml
-      - ./entrypoint.sh:/entrypoint.sh
     networks:
       home:
         ipv4_address: 192.168.0.2
