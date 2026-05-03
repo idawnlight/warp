@@ -35,11 +35,6 @@ add_ip6tables_rule() {
 	fi
 }
 
-write_ipv6_forwarding() {
-	echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
-	echo 1 > /proc/sys/net/ipv6/conf/default/forwarding
-}
-
 configure_slaac_address() {
 	echo "Configuring ${SLAAC_ADDRESS} on ${LAN_INTERFACE}..."
 	ip link set dev "$LAN_INTERFACE" up
@@ -88,7 +83,6 @@ write_radvd_config() {
 
 start_ipv6_lan() {
 	echo "Enabling IPv6 forwarding..."
-	write_ipv6_forwarding
 
 	configure_slaac_address
 
