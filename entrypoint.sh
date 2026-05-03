@@ -7,7 +7,6 @@ LAN_INTERFACE="${LAN_INTERFACE:-eth0}"
 WARP_INTERFACE="${WARP_INTERFACE:-CloudflareWARP}"
 ENABLE_IPV6_LAN="${ENABLE_IPV6_LAN:-false}"
 SLAAC_PREFIX="${SLAAC_PREFIX:-fd42:5741:5250::/64}"
-SLAAC_ADDRESS="${SLAAC_ADDRESS:-fd42:5741:5250::1/64}"
 SLAAC_RDNSS="${SLAAC_RDNSS:-}"
 
 is_enabled() {
@@ -35,22 +34,14 @@ add_ip6tables_rule() {
 	fi
 }
 
-configure_slaac_address() {
-	echo "Configuring ${SLAAC_ADDRESS} on ${LAN_INTERFACE}..."
-	ip link set dev "$LAN_INTERFACE" up
+verify_lan_ipv6_address() {
+	echo "Checking Docker-assigned IPv6 address on ${LAN_INTERFACE}..."
 
-	if ip -6 addr add "$SLAAC_ADDRESS" dev "$LAN_INTERFACE" 2>/tmp/slaac-ip.err; then
-		rm -f /tmp/slaac-ip.err
+	if ip -6 addr show dev "$LAN_INTERFACE" scope global | grep -q 'inet6 '; then
 		return
 	fi
 
-	if grep -q "File exists" /tmp/slaac-ip.err; then
-		rm -f /tmp/slaac-ip.err
-		return
-	fi
-
-	cat /tmp/slaac-ip.err >&2
-	rm -f /tmp/slaac-ip.err
+	echo "No global IPv6 address found on ${LAN_INTERFACE}. Recreate the Docker network with IPv6 enabled and set LAN_IPV6_ADDRESS in warp.env." >&2
 	exit 1
 }
 
@@ -68,7 +59,6 @@ write_radvd_config() {
 		printf '    {\n'
 		printf '        AdvOnLink on;\n'
 		printf '        AdvAutonomous on;\n'
-		printf '        AdvRouterAddr on;\n'
 		printf '    };\n'
 
 		if [ -n "$SLAAC_RDNSS" ]; then
@@ -84,7 +74,7 @@ write_radvd_config() {
 start_ipv6_lan() {
 	echo "Enabling IPv6 forwarding..."
 
-	configure_slaac_address
+	verify_lan_ipv6_address
 
 	echo "Configuring ip6tables NAT6 rule..."
 	add_ip6tables_rule nat POSTROUTING -o "$WARP_INTERFACE" -j MASQUERADE
