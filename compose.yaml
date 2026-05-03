@@ -20,9 +20,7 @@ services:
       - warp-data:/var/lib/cloudflare-warp
       - ./mdm.xml:/var/lib/cloudflare-warp/mdm.xml
     networks:
-      home:
-        ipv4_address: "${LAN_IPV4_ADDRESS:?Set LAN_IPV4_ADDRESS in warp.env and run docker compose --env-file warp.env up -d}"
-        ipv6_address: "${LAN_IPV6_ADDRESS:?Set LAN_IPV6_ADDRESS in warp.env and run docker compose --env-file warp.env up -d}"
+      home: {}
 
 volumes:
   warp-data:

@@ -1,0 +1,6 @@
+services:
+  warp-router:
+    networks:
+      home:
+        ipv4_address: 192.168.0.2
+        ipv6_address: fd42:5741:5250::2

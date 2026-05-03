@@ -14,7 +14,9 @@ Dockerized Cloudflare WARP client with [gost](https://github.com/go-gost/gost) p
 
 ```sh
 cp warp.env.example warp.env
+cp compose.override.yaml.example compose.override.yaml
 vim warp.env
+vim compose.override.yaml
 
 docker network create -d macvlan \
     --subnet=192.168.0.0/24 \
@@ -25,7 +27,7 @@ docker network create -d macvlan \
 
 cp mdm.xml.template mdm.xml
 vim mdm.xml
-docker compose --env-file warp.env up -d
+docker compose up -d
 ```
 
 ## Configuration
@@ -36,9 +38,9 @@ Mount an `mdm.xml` to `/var/lib/cloudflare-warp/mdm.xml` for managed deployment 
 
 The Compose file enables a small IPv6 LAN router mode. Docker assigns the container a ULA address from the external macvlan network, the container advertises that /64 with `radvd`, and IPv6 client traffic is masqueraded out through the WARP interface.
 
-Runtime values live in `warp.env`, which is ignored by Git. Start from `warp.env.example` and adjust it for the target LAN.
+Runtime values live in `warp.env`, which is ignored by Git. Static Docker network addresses live in `compose.override.yaml`, which is also ignored by Git. Start from the example files and adjust them for the target LAN.
 
-The `home` Docker network must be created with IPv6 enabled, and `LAN_IPV6_ADDRESS` must be an address inside `SLAAC_PREFIX` without a CIDR suffix. If `home` was created before IPv6 was added, remove and recreate that Docker network before starting the container.
+The `home` Docker network must be created with IPv6 enabled, and the `ipv6_address` in `compose.override.yaml` must be an address inside `SLAAC_PREFIX` without a CIDR suffix. If `home` was created before IPv6 was added, remove and recreate that Docker network before starting the container.
 
 Defaults:
 
@@ -46,9 +48,7 @@ Defaults:
 ENABLE_IPV6_LAN=true
 LAN_INTERFACE=eth0
 WARP_INTERFACE=CloudflareWARP
-LAN_IPV4_ADDRESS=192.168.0.2
-LAN_IPV6_ADDRESS=fd42:5741:5250::2
 SLAAC_PREFIX=fd42:5741:5250::/64
 ```
 
-Use a unique ULA /64 for `SLAAC_PREFIX` and put `LAN_IPV6_ADDRESS` inside that prefix. This is NAT66/NAT6, not public IPv6 prefix delegation. To advertise recursive DNS servers with RDNSS, set `SLAAC_RDNSS`, for example `2606:4700:4700::1111 2606:4700:4700::1001`.
+Use a unique ULA /64 for `SLAAC_PREFIX` and put the container `ipv6_address` in `compose.override.yaml` inside that prefix. This is NAT66/NAT6, not public IPv6 prefix delegation. To advertise recursive DNS servers with RDNSS, set `SLAAC_RDNSS`, for example `2606:4700:4700::1111 2606:4700:4700::1001`.
