@@ -79,6 +79,9 @@ start_ipv6_lan() {
 	echo "Configuring ip6tables NAT6 rule..."
 	add_ip6tables_rule nat POSTROUTING -o "$WARP_INTERFACE" -j MASQUERADE
 
+	echo "Dropping IPv6 INVALID conntrack packets..."
+	add_ip6tables_rule filter FORWARD -m conntrack --ctstate INVALID -j DROP
+
 	echo "Applying IPv6 TCP MSS Clamping..."
 	add_ip6tables_rule mangle FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
 
@@ -100,6 +103,9 @@ warp-svc &
 # Set up NAT Masquerading for the LAN gateway feature
 echo "Configuring iptables NAT rule..."
 add_iptables_rule nat POSTROUTING -o "$WARP_INTERFACE" -j MASQUERADE
+
+echo "Dropping INVALID conntrack packets..."
+add_iptables_rule filter FORWARD -m conntrack --ctstate INVALID -j DROP
 
 # Force TCP packets to adapt to the WARP MTU to prevent fragmentation
 echo "Applying TCP MSS Clamping..."
