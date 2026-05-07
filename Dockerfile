@@ -25,6 +25,10 @@ RUN ARCH=$(dpkg --print-architecture) \
        | tar -xz -C /usr/local/bin gost \
     && chmod +x /usr/local/bin/gost
 
+# Run gost under its own user so OUTPUT filtering can distinguish proxy egress.
+RUN groupadd --system gost \
+    && useradd --system --gid gost --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin gost
+
 # Copy our startup script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

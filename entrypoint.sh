@@ -5,6 +5,7 @@ set -e
 
 LAN_INTERFACE="${LAN_INTERFACE:-eth0}"
 WARP_INTERFACE="${WARP_INTERFACE:-CloudflareWARP}"
+GOST_USER="${GOST_USER:-gost}"
 ENABLE_IPV6_LAN="${ENABLE_IPV6_LAN:-false}"
 SLAAC_PREFIX="${SLAAC_PREFIX:-fd42:5741:5250::/64}"
 SLAAC_RDNSS="${SLAAC_RDNSS:-}"
@@ -71,6 +72,11 @@ write_radvd_config() {
 	} > /etc/radvd.conf
 }
 
+block_container_public_ipv6() {
+	echo "Blocking non-${GOST_USER} container-originated public IPv6 connections..."
+	add_ip6tables_rule filter OUTPUT -d 2000::/3 -m owner ! --uid-owner "$GOST_USER" -j REJECT
+}
+
 start_ipv6_lan() {
 	echo "Enabling IPv6 forwarding..."
 
@@ -97,6 +103,10 @@ rm -f /run/dbus/pid
 dbus-daemon --system --nofork &
 sleep 1
 
+if is_enabled "$ENABLE_IPV6_LAN"; then
+	block_container_public_ipv6
+fi
+
 echo "Starting warp-svc..."
 warp-svc &
 
@@ -118,7 +128,7 @@ else
 fi
 
 echo "Starting gost..."
-gost -L "http://:1080?udp=true" -L "socks5://:1081?udp=true" &
+runuser -u "$GOST_USER" -- gost -L "http://:1080?udp=true" -L "socks5://:1081?udp=true" &
 
 # Keep the container running
 wait -n
